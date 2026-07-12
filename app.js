@@ -1,7 +1,7 @@
-const STORAGE_KEY='liam_companion_v3';
-const LEGACY_STORAGE_KEYS=['liam_companion_v2','liam_companion_v1'];
+const STORAGE_KEY='liam_companion_v3_1_5B';
+const LEGACY_STORAGE_KEYS=['liam_companion_v3','liam_companion_v2','liam_companion_v1'];
 const SCHEMA_VERSION='1.5B';
-const APP_VERSION='3.1.5B';
+const APP_VERSION='3.1.5B-migration-fix';
 const DEFAULT_COMPETITIONS=[
   {name:'Scottish Premiership',type:'Club'},
   {name:'Scottish Cup',type:'Club'},
@@ -17,6 +17,8 @@ const DEFAULT_COMPETITIONS=[
 let state;
 let currentTab='fixture';
 let editingId=null;
+let startupLoadSource='default';
+let startupMigrationError='';
 
 function seasonStartYear(season){const match=String(season||'').match(/^(\d{4})\s*\//);return match?Number(match[1]):new Date().getFullYear()}
 function seasonDefaultDate(season){return `${seasonStartYear(season)}-07-01`}
@@ -30,9 +32,17 @@ function newDraft(settings={season:'2037/38'},dateOverride=''){const id=uuid();r
 function defaultState(){const settings={season:'2037/38',club:'Heart of Midlothian',homeVenue:'Tynecastle Park',nationalTeam:'England',competitions:DEFAULT_COMPETITIONS.map(x=>({...x}))};const defaultDate=seasonDefaultDate(settings.season);return{schemaVersion:SCHEMA_VERSION,settings,competitions:settings.competitions,datePreference:{type:'season_changed',at:new Date().toISOString(),date:defaultDate},draft:newDraft(settings,defaultDate),matches:[],migrationNotes:[]}}
 function migrateMatch(m,settings){const source=m||{};const out={...newDraft(settings||{season:'2037/38'}),...source};out.id=source.id||source.Match_ID||uuid();out.Match_ID=source.Match_ID||source.matchId||source.id||out.id;out.Season=source.Season||source.season||settings?.season||'2037/38';out.homeAway=machineHomeAway(out.homeAway);if(out.shotAccuracy===''&&out.sot!==''&&out.shots!==''&&Number(out.shots)>0)out.shotAccuracy=Math.round(Number(out.sot)/Number(out.shots)*100);if(out.shotsOnTarget===''&&out.Shots_On_Target!=='')out.shotsOnTarget=out.Shots_On_Target||'';if(!out.competitionType)out.competitionType=(settings?.competitions||DEFAULT_COMPETITIONS).find(c=>c.name===out.competition)?.type||'Club';if(!Array.isArray(out.goals))out.goals=[];if(!Array.isArray(out.assists))out.assists=[];return out}
 function migrateState(raw){const base=defaultState();const settings={...base.settings,...(raw?.settings||{})};const rawCompetitions=Array.isArray(raw?.competitions)?raw.competitions:raw?.settings?.competitions;if(Array.isArray(rawCompetitions)&&rawCompetitions.length)settings.competitions=rawCompetitions.map(c=>({name:c.name,type:displayCompType(c.type)}));else settings.competitions=DEFAULT_COMPETITIONS.map(x=>({...x}));const migrationNotes=[...(Array.isArray(raw?.migrationNotes)?raw.migrationNotes:[])];const matches=Array.isArray(raw?.matches)?raw.matches.map(m=>{const hadSeason=Boolean(m?.Season||m?.season);const migrated=migrateMatch(m,settings);if(!hadSeason)migrationNotes.push(`Match ${migrated.Match_ID} assigned inferred Season ${migrated.Season} during v${SCHEMA_VERSION} migration.`);return migrated}):[];let datePreference=raw?.datePreference;if(!datePreference||!datePreference.date){const last=matches.length?[...matches].sort((a,b)=>(a.savedAt||a.date).localeCompare(b.savedAt||b.date)).at(-1):null;datePreference=last?{type:'match_saved',at:last.savedAt||new Date().toISOString(),date:addDays(last.date,2)}:{type:'season_changed',at:new Date().toISOString(),date:seasonDefaultDate(settings.season)}}const draft=migrateMatch(raw?.draft||newDraft(settings,datePreference.date),settings);if(isDraftEmpty(draft))draft.date=datePreference.date;return{...base,...raw,schemaVersion:SCHEMA_VERSION,settings,competitions:settings.competitions,datePreference,draft,matches,migrationNotes}}
-function loadState(){try{let raw=localStorage.getItem(STORAGE_KEY);if(!raw){for(const key of LEGACY_STORAGE_KEYS){raw=localStorage.getItem(key);if(raw)break}}return raw?migrateState(JSON.parse(raw)):defaultState()}catch(error){console.error('Could not load saved Career Companion data',error);return defaultState()}}
+function hasCustomSettings(s){const d=defaultState().settings;return ['season','club','homeVenue','nationalTeam'].some(k=>String(s?.settings?.[k]||'')!==String(d[k]||''))||(Array.isArray(s?.settings?.competitions)&&JSON.stringify(s.settings.competitions)!==JSON.stringify(d.competitions))}
+function hasUserData(s){return Array.isArray(s?.matches)&&s.matches.length>0||s?.draft&&!isDraftEmpty(s.draft)||hasCustomSettings(s)}
+function validateLoadedState(s){if(!s||typeof s!=='object')throw new Error('state is not an object');if(!s.settings||typeof s.settings!=='object')throw new Error('settings missing');if(!Array.isArray(s.settings.competitions))throw new Error('competitions missing');if(!Array.isArray(s.matches))throw new Error('matches missing');const ids=new Set();s.matches.forEach((m,i)=>{if(!m.id)throw new Error(`match ${i+1} missing internal id`);if(!m.Match_ID)throw new Error(`match ${i+1} missing Match_ID`);if(!m.Season)throw new Error(`match ${i+1} missing Season`);if(ids.has(m.Match_ID))throw new Error(`duplicate Match_ID ${m.Match_ID}`);ids.add(m.Match_ID)});return true}
+function parseStoredState(key){const raw=localStorage.getItem(key);if(!raw)return null;return migrateState(JSON.parse(raw))}
+function saveMigratedState(nextState){validateLoadedState(nextState);localStorage.setItem(STORAGE_KEY,JSON.stringify(nextState));}
+function loadState(){startupLoadSource='default';startupMigrationError='';try{const current=parseStoredState(STORAGE_KEY);if(current){validateLoadedState(current);if(hasUserData(current)){startupLoadSource=STORAGE_KEY;return current}}}catch(error){console.error(`Could not load ${STORAGE_KEY}`,error);startupMigrationError=`Current 1.5B storage was invalid: ${error.message}`;}
+  for(const key of LEGACY_STORAGE_KEYS){try{const migrated=parseStoredState(key);if(!migrated)continue;validateLoadedState(migrated);if(!hasUserData(migrated))continue;saveMigratedState(migrated);startupLoadSource=key;startupMigrationError='';return migrated}catch(error){console.error(`Could not migrate ${key}`,error);startupMigrationError=`Could not migrate ${key}: ${error.message}`;return {...defaultState(),migrationError:startupMigrationError}}}
+  return defaultState()}
 state=loadState();
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));updateStatus()}
+function persistStartupState(){if(startupMigrationError){showToast(startupMigrationError);return}if(startupLoadSource==='default'||startupLoadSource===STORAGE_KEY)return;persist()}
 function val(id){return document.getElementById(id).value}
 function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v??''}
 function minuteToBase(v){if(!v)return 0;const p=String(v).split('+').map(Number);return(p[0]||0)+(p[1]||0)}
@@ -91,4 +101,4 @@ document.getElementById('clearAll').onclick=()=>{if(confirm('Clear all matches a
 document.getElementById('saveSettings').onclick=()=>{pullDraft();const oldSeason=state.settings.season;const newSeason=val('settingSeason').trim()||oldSeason;state.settings={...state.settings,season:newSeason,club:val('settingClub'),homeVenue:val('settingHomeVenue'),nationalTeam:val('settingNational')};state.competitions=state.settings.competitions;if(newSeason!==oldSeason){const seasonDate=seasonDefaultDate(newSeason);state.datePreference={type:'season_changed',at:new Date().toISOString(),date:seasonDate};state.draft=newDraft(state.settings,seasonDate);editingId=null}persist();populate();showToast(newSeason!==oldSeason?'Settings saved · new season starts 1 July':'Settings saved')};
 document.getElementById('addCompetition').onclick=()=>{const name=val('newCompetitionName').trim();const type=val('newCompetitionType');if(!name)return showToast('Tournament name is required');if(state.settings.competitions.some(c=>c.name.toLowerCase()===name.toLowerCase()))return showToast('Tournament already exists');state.settings.competitions.push({name,type});setVal('newCompetitionName','');persist();renderCompetitionSettings();renderCompetitionOptions();showToast('Tournament added')};
 
-window.addEventListener('pagehide',()=>{try{pullDraft()}catch{persist()}});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){try{pullDraft()}catch{persist()}}});if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('service-worker.js');persist();populate();
+window.addEventListener('pagehide',()=>{try{pullDraft()}catch{persist()}});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){try{pullDraft()}catch{persist()}}});if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('service-worker.js');populate();persistStartupState();
