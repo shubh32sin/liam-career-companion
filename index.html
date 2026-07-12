@@ -59,7 +59,7 @@
         <div class="field"><label>Stage / Round</label><input id="stage" placeholder="League, Group stage, Quarter-final..."></div>
         <div class="field"><label>Opponent</label><input id="opponent" placeholder="Aberdeen"></div>
       </div>
-      <div class="field"><label>Home / Away / Neutral</label><div class="segmented" id="haButtons"><button data-value="Home" class="active">Home</button><button data-value="Away">Away</button><button data-value="Neutral">Neutral</button></div></div>
+      <div class="field"><label>Home / Away / Neutral</label><div class="segmented" id="haButtons"><button data-value="H" class="active">Home</button><button data-value="A">Away</button><button data-value="N">Neutral</button></div></div>
       <div class="field" id="venueField" style="display:none"><label>Venue</label><input id="venue" placeholder="Wembley Stadium"></div>
       <div class="grid2">
         <div class="field"><label>Team position before match</label><input id="teamPos" type="number" inputmode="numeric" min="1" placeholder="5"></div>
@@ -96,6 +96,7 @@
         <div class="field"><label>Shots</label><input id="shots" type="number" inputmode="numeric" min="0"></div>
         <div class="field"><label>Shot accuracy %</label><input id="shotAccuracy" type="number" inputmode="numeric" min="0" max="100"></div>
       </div>
+      <div class="field"><label>Shots on target (optional raw)</label><input id="shotsOnTarget" type="number" inputmode="numeric" min="0"></div>
       <div class="grid2">
         <div class="field"><label>Dribbles</label><input id="dribbles" type="number" inputmode="numeric" min="0"></div>
         <div class="field"><label>Dribble success %</label><input id="dribblePct" type="number" inputmode="numeric" min="0" max="100"></div>
@@ -119,9 +120,11 @@
     <div class="card"><div class="section-title"><div><h2>Season snapshot</h2><p class="sub">Calculated locally from saved appearances.</p></div><span>Live totals</span></div><div class="summary" id="summary"></div></div>
     <div class="card"><div class="section-title"><div><h2>Saved matches</h2><p class="sub">Edit or delete before exporting.</p></div><span id="matchCount">0 matches</span></div><div id="matchList"></div></div>
     <div class="card"><div class="section-title"><div><h2>Export & backup</h2><p class="sub">Exports align with the Liam dossier starter schemas.</p></div><span>Files</span></div>
+      <div class="field"><label>Export season</label><input id="exportSeason" placeholder="2037/38"><div class="tiny">CSV exports are complete season snapshots. JSON backup remains all seasons.</div></div>
       <div class="export-grid">
         <button class="secondary" id="exportTeamCsv">Export current_season_team_matches.csv</button>
         <button class="secondary" id="exportAppsCsv">Export current_season_matches.csv</button>
+        <button class="secondary" id="exportManifest">Export export_manifest.json</button>
         <button class="secondary" id="exportJson">Export JSON backup</button>
         <label class="secondary" style="text-align:center;cursor:pointer">Import JSON backup<input id="importJson" type="file" accept="application/json" hidden></label>
         <button class="danger" id="clearAll">Clear all saved data</button>

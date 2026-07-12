@@ -1,4 +1,4 @@
-# Liam Career Companion v1
+# Liam Career Companion v3.1.5B
 
 A mobile-first offline-capable PWA for logging Liam Murdock's FC26 matches with minimal friction.
 
@@ -19,18 +19,20 @@ The app exports:
 
 - `current_season_team_matches.csv`
 - `current_season_matches.csv`
+- `export_manifest.json`
 - `liam_companion_backup.json`
 
-The two CSVs preserve the Liam dossier's existing starter columns and append these new columns at the end:
+The canonical dossier root is:
 
-- `Assist_Minutes`
-- `Dribbles`
-- `Dribble_Success_Pct`
-- `Offsides`
-- `Possession_Lost`
-- `Distance_Sprinted_Km`
+```text
+/Users/shubham/Documents/Liam_Dossier
+```
 
-The current dossier build will safely ignore unknown appended columns until its views are extended to use them.
+CSV exports are complete season-scoped snapshots. The team CSV includes all statuses; the player CSV includes only `START` and `SUB`. JSON backup remains a complete all-season application backup.
+
+The export contract uses stable `Match_ID`, per-match `Season`, `H/A/N` home-away values, `CLUB/INTERNATIONAL` competition type values, pipe-delimited event minutes, and canonical performance fields such as `Dribbles_Attempted` and `Distance_Sprinted`.
+
+`Shots_On_Target` is optional raw data and is not derived from shot accuracy.
 
 ## Run locally on a Mac
 
@@ -56,13 +58,14 @@ After hosting:
 2. Tap Share.
 3. Tap **Add to Home Screen**.
 
-## v1 limitations
+## v3.1.5B notes
 
 - No cloud sync.
 - No screenshot attachments.
 - No fixture schedule import.
 - Minutes are derived from entry/exit values using a 90-minute default when no exit is entered.
 - Home venue is derived from Settings; away venue is left blank because the app does not yet maintain an opponent stadium registry.
+- Existing v3 localStorage is migrated in place. Matches missing per-match `Season` are assigned the saved settings season once and listed in `migrationNotes`.
 
 
 ## v2 changes
