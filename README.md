@@ -63,3 +63,12 @@ After hosting:
 - No fixture schedule import.
 - Minutes are derived from entry/exit values using a 90-minute default when no exit is entered.
 - Home venue is derived from Settings; away venue is left blank because the app does not yet maintain an opponent stadium registry.
+
+
+## v2 changes
+
+- Competition now has its own full-width row on the Fixture screen.
+- Competitions can be added or removed in Records → Setup / season settings, with Club or International classification.
+- A new empty draft defaults to 1 July of the selected season's starting year. Changing season resets the draft date only when the active draft is empty, so an in-progress match is not silently altered.
+- Post-match entry now records Shots + Shot Accuracy on one row. Shots on target is derived for CSV compatibility by rounding `shots × accuracy / 100`.
+- Dribbles + Dribble Success and Yellow + Red are paired in rows to follow the FC performance screen more naturally.

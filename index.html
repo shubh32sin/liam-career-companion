@@ -30,7 +30,7 @@
     .match-card{border:1px solid #2f3d58;border-radius:16px;padding:13px;margin:9px 0;background:#0e1729}.match-card .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}.match-card h4{margin:8px 0 4px}.match-card p{margin:0;color:#cbd5e1;font-size:13px}.match-card .actions{display:flex;gap:8px;margin-top:11px}.match-card .actions button{flex:1;padding:9px;border-radius:10px;border:1px solid #3a4b6d;background:#18243a;color:#fff}
     .bottom-save{position:fixed;left:0;right:0;bottom:0;background:rgba(11,16,32,.94);backdrop-filter:blur(16px);padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.09);z-index:30}.bottom-save .inner{max-width:720px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:98px;background:#19243a;color:#fff;border:1px solid #425277;padding:10px 14px;border-radius:999px;display:none;z-index:60;font-size:13px}.toast.show{display:block}
-    .empty{padding:18px;text-align:center;border:1px dashed #3a4865;border-radius:14px;color:var(--muted)}
+    .empty{padding:18px;text-align:center;border:1px dashed #3a4865;border-radius:14px;color:var(--muted)}.settings-list{display:grid;gap:8px;margin:10px 0 14px}.settings-item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border:1px solid #30405f;border-radius:12px;background:#0c1425}.settings-item small{color:var(--muted)}.settings-item button{border:1px solid #5a3340;background:#351620;color:#ffc5cf;border-radius:9px;padding:7px 9px}.full-row{grid-column:1/-1}
     details{border:1px solid #30405f;border-radius:14px;padding:11px 12px;background:#0c1425}summary{font-weight:850;cursor:pointer}.export-grid{display:grid;gap:9px}.export-grid button{width:100%}
     @media(max-width:520px){.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}.summary{grid-template-columns:repeat(2,1fr)}.brand h1{font-size:18px}.tabs{gap:5px}.tab{font-size:11px;padding:9px 4px}}
   </style>
@@ -53,10 +53,8 @@
   <section class="panel active" id="fixture">
     <div class="card">
       <div class="section-title"><div><h2>Pre-match fixture</h2><p class="sub">Enter only what cannot be derived later.</p></div><span>Fixture</span></div>
-      <div class="grid2">
-        <div class="field"><label>Date</label><input id="date" type="date"></div>
-        <div class="field"><label>Competition</label><select id="competition"><option>Scottish Premiership</option><option>Scottish Cup</option><option>Scottish League Cup</option><option>UEFA Conference League</option><option>International Friendly</option><option>Euro Qualifier</option><option>Euro Cup</option><option>World Cup Qualifier</option><option>International Cup</option><option>Other</option></select></div>
-      </div>
+      <div class="field"><label>Date</label><input id="date" type="date"></div>
+      <div class="field"><label>Competition</label><select id="competition"></select><div class="tiny" id="competitionTypeHint"></div></div>
       <div class="grid2">
         <div class="field"><label>Stage / Round</label><input id="stage" placeholder="League, Group stage, Quarter-final..."></div>
         <div class="field"><label>Opponent</label><input id="opponent" placeholder="Aberdeen"></div>
@@ -93,20 +91,24 @@
         <div class="field"><label>Subbed in minute</label><input id="subIn" inputmode="numeric" placeholder="67"></div>
         <div class="field"><label>Subbed out minute</label><input id="subOut" inputmode="numeric" placeholder="73 or 90+2"></div>
       </div>
-      <div class="grid3">
-        <div class="field"><label>Rating</label><input id="rating" type="number" inputmode="decimal" step="0.1" min="0" max="10"></div>
+      <div class="field"><label>Rating</label><input id="rating" type="number" inputmode="decimal" step="0.1" min="0" max="10"></div>
+      <div class="grid2">
         <div class="field"><label>Shots</label><input id="shots" type="number" inputmode="numeric" min="0"></div>
-        <div class="field"><label>Shots on target</label><input id="sot" type="number" inputmode="numeric" min="0"></div>
+        <div class="field"><label>Shot accuracy %</label><input id="shotAccuracy" type="number" inputmode="numeric" min="0" max="100"></div>
+      </div>
+      <div class="grid2">
         <div class="field"><label>Dribbles</label><input id="dribbles" type="number" inputmode="numeric" min="0"></div>
         <div class="field"><label>Dribble success %</label><input id="dribblePct" type="number" inputmode="numeric" min="0" max="100"></div>
-        <div class="field"><label>Offsides</label><input id="offsides" type="number" inputmode="numeric" min="0"></div>
-        <div class="field"><label>Possession lost</label><input id="possLost" type="number" inputmode="numeric" min="0"></div>
-        <div class="field"><label>Distance sprinted km</label><input id="sprintKm" type="number" inputmode="decimal" step="0.1" min="0"></div>
-        <div class="field"><label>Disallowed goal</label><select id="disallowed"><option value="0">No</option><option value="1">Yes</option></select></div>
+      </div>
+      <div class="field"><label>Offsides</label><input id="offsides" type="number" inputmode="numeric" min="0"></div>
+      <div class="field"><label>Possession lost</label><input id="possLost" type="number" inputmode="numeric" min="0"></div>
+      <div class="field"><label>Distance sprinted km</label><input id="sprintKm" type="number" inputmode="decimal" step="0.1" min="0"></div>
+      <div class="field"><label>Disallowed goal</label><select id="disallowed"><option value="0">No</option><option value="1">Yes</option></select></div>
+      <div class="grid2">
         <div class="field"><label>Yellow</label><input id="yellow" type="number" inputmode="numeric" min="0" max="2" value="0"></div>
         <div class="field"><label>Red</label><input id="red" type="number" inputmode="numeric" min="0" max="1" value="0"></div>
-        <div class="field"><label>Man of match</label><select id="motm"><option value="0">No</option><option value="1">Yes</option></select></div>
       </div>
+      <div class="field"><label>Man of match</label><select id="motm"><option value="0">No</option><option value="1">Yes</option></select></div>
       <div class="field"><label>Key moment / notes</label><textarea id="notes" rows="3" placeholder="Late winner, debut, missed penalty..."></textarea></div>
       <div class="field"><label>Story tags</label><input id="storyTag" placeholder="Debut, Brace, Derby, Late winner..."></div>
       <button class="primary" id="saveMatch">Finish and save match</button>
@@ -125,7 +127,24 @@
         <button class="danger" id="clearAll">Clear all saved data</button>
       </div>
     </div>
-    <div class="card"><details><summary>Setup / season settings</summary><div style="margin-top:12px" class="grid2"><div class="field"><label>Season</label><input id="settingSeason" value="2026/27"></div><div class="field"><label>Club</label><input id="settingClub" value="Heart of Midlothian"></div><div class="field"><label>Home venue</label><input id="settingHomeVenue" value="Tynecastle Park"></div><div class="field"><label>Nationality team</label><input id="settingNational" value="England"></div></div><button class="secondary" id="saveSettings">Save settings</button></details></div>
+    <div class="card"><details><summary>Setup / season settings</summary>
+      <div style="margin-top:12px" class="grid2">
+        <div class="field"><label>Season</label><input id="settingSeason" value="2026/27" placeholder="2036/37"></div>
+        <div class="field"><label>Club</label><input id="settingClub" value="Heart of Midlothian"></div>
+        <div class="field"><label>Home venue</label><input id="settingHomeVenue" value="Tynecastle Park"></div>
+        <div class="field"><label>National team</label><input id="settingNational" value="England"></div>
+      </div>
+      <button class="secondary" id="saveSettings">Save season settings</button>
+      <hr style="border:none;border-top:1px solid #30405f;margin:18px 0">
+      <h3>Competition dropdown</h3>
+      <p class="sub">Add club or international tournaments here. They will appear in the Fixture dropdown.</p>
+      <div class="grid2">
+        <div class="field"><label>Tournament name</label><input id="newCompetitionName" placeholder="Europa League"></div>
+        <div class="field"><label>Type</label><select id="newCompetitionType"><option value="Club">Club</option><option value="International">International</option></select></div>
+      </div>
+      <button class="secondary" id="addCompetition">Add tournament</button>
+      <div class="settings-list" id="competitionSettingsList"></div>
+    </details></div>
   </section>
 </div>
 
