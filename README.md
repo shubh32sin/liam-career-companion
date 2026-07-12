@@ -72,3 +72,13 @@ After hosting:
 - A new empty draft defaults to 1 July of the selected season's starting year. Changing season resets the draft date only when the active draft is empty, so an in-progress match is not silently altered.
 - Post-match entry now records Shots + Shot Accuracy on one row. Shots on target is derived for CSV compatibility by rounding `shots × accuracy / 100`.
 - Dribbles + Dribble Success and Yellow + Red are paired in rows to follow the FC performance screen more naturally.
+
+
+## Version 3 persistence and date rules
+
+- Settings, custom tournaments, active drafts, completed matches, and record totals persist across app closures.
+- Existing v1/v2 browser data is migrated automatically when available.
+- After a match is saved, the next fixture defaults to two calendar days later.
+- After the season changes, the fixture resets to 1 July of the season starting year.
+- The app saves again when it is backgrounded or closed and requests persistent browser storage when supported.
+- Continue using JSON backup periodically. Browser storage is durable but should not be treated as the only permanent backup.
